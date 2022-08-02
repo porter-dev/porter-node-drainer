@@ -1,0 +1,55 @@
+on:
+  push:
+    tags:
+      - "v*"
+name: Create prerelease w/ binaries and docker image
+jobs:
+  release:
+    name: Build Linux binaries, zip them and upload to created release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get tag name
+        id: tag_name
+        run: |
+          tag=${GITHUB_TAG/refs\/tags\//}
+          echo ::set-output name=tag::$tag
+        env:
+          GITHUB_TAG: ${{ github.ref }}
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.18
+      - name: Build Linux binaries
+        run: |
+          go build -ldflags="-w -s" -a -o ./porter-node-drainer .
+        env:
+          GOOS: linux
+          GOARCH: amd64
+          CGO_ENABLED: 1
+      - name: Zip Linux binaries
+        run: |
+          mkdir -p ./release/linux
+          zip --junk-paths ./release/linux/porter_node_drainer_Linux_x86_64.zip ./porter-node-drainer
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: true
+      - name: Upload Linux Release Asset
+        id: upload-linux-cli-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TAG: ${{ github.ref }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./release/linux/porter_node_drainer_Linux_x86_64.zip
+          asset_name: porter_node_drainer_Linux_x86_64.zip
+          asset_content_type: application/zip
