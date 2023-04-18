@@ -27,7 +27,7 @@ jobs:
         env:
           GOOS: linux
           GOARCH: amd64
-          CGO_ENABLED: 1
+          CGO_ENABLED: 0
       - name: Zip Linux binaries
         run: |
           mkdir -p ./release/linux
