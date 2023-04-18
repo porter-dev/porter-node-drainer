@@ -2,9 +2,11 @@ package aws
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
+	//"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/joeshaw/envdecode"
 	"k8s.io/client-go/kubernetes"
@@ -15,8 +17,9 @@ import (
 )
 
 type EKSCredentials struct {
-	AccessKeyID   string `env:"EKS_AWS_ACCESS_KEY_ID"`
-	SecretKey     string `env:"EKS_AWS_SECRET_ACCESS_KEY"`
+	//AccessKeyID   string `env:"EKS_AWS_ACCESS_KEY_ID"`
+	//SecretKey     string `env:"EKS_AWS_SECRET_ACCESS_KEY"`
+	myRoleArn     string `env:"EKS_AWS_ROLE_ARN"`
 	Region        string `env:"EKS_AWS_REGION"`
 	ClusterID     string `env:"EKS_AWS_CLUSTER_ID"`
 	ClusterServer string `env:"EKS_CLUSTER_SERVER"`
@@ -110,14 +113,11 @@ func (a *EKSCredentials) GetBearerToken() (string, error) {
 }
 
 func (a *EKSCredentials) GetSession() (*session.Session, error) {
+	sess := session.Must(session.NewSession())
+	creds := stscreds.NewCredentials(sess, os.Getenv("EKS_AWS_ROLE_ARN"))
 	awsConf := &aws.Config{
-		Credentials: credentials.NewStaticCredentials(
-			string(a.AccessKeyID),
-			string(a.SecretKey),
-			"",
-		),
+		Credentials: creds,
 	}
-
 	awsConf.Region = &a.Region
 
 	return session.NewSessionWithOptions(session.Options{
