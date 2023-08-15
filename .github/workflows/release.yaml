@@ -23,7 +23,7 @@ jobs:
           go-version: 1.18
       - name: Build Linux binaries
         run: |
-          go build -ldflags="-w -s" -a -o ./porter-node-drainer .
+          go build -ldflags="-w -s" -a -o ./bootstrap .
         env:
           GOOS: linux
           GOARCH: amd64
@@ -31,7 +31,7 @@ jobs:
       - name: Zip Linux binaries
         run: |
           mkdir -p ./release/linux
-          zip --junk-paths ./release/linux/porter_node_drainer_Linux_x86_64.zip ./porter-node-drainer
+          zip --junk-paths ./release/linux/porter_node_drainer_Linux_x86_64.zip ./bootstrap
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
